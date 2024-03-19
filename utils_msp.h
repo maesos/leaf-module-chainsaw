@@ -55,6 +55,10 @@ int um_adc_getnext(int16_t * readback);
 
 
 
+int um_tim_init();
+int um_tim_init_ticks();
+
+
 
 
 #endif /* UTILS_MSP_H_ */

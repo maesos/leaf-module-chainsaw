@@ -186,20 +186,17 @@ int main(void) {
 //        stop_mode(500);
 
 
-
         uint8_t recv_buff[10] = {0};
 
-        if (0 && loops == 150)
+        if (1 && loops % 200 == 0)
         {
-            GPIO_setOutputLowOnPin(RS485_REn_PORT, RS485_REn_PIN);
-            GPIO_setOutputLowOnPin(RS485_RX_PORT, RS485_RX_PIN);
-            GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN7);
-            stop_mode(1);
-            GPIO_setOutputHighOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
+//            GPIO_setOutputLowOnPin(RS485_REn_PORT, RS485_REn_PIN);
+//            GPIO_setOutputLowOnPin(RS485_RX_PORT, RS485_RX_PIN);
+//            GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN7);
+//            stop_mode(1);
+            GPIO_toggleOutputOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
             stop_mode(25);
         }
-
-
         if (loops % 35 == 0)
         {
             GPIO_toggleOutputOnPin(GPIO_PORT_P2, GPIO_PIN7);
@@ -217,9 +214,10 @@ int main(void) {
 
 //        UM_ADC_CH_A6 for the actual external one
         int16_t reeeeed = 0;
-        int16_t rainge = UM_ADC_RANGE_VREFP;
+        int16_t rainge = UM_ADC_RANGE_LARGE;
+        const int16_t inputch = ADC_INPUT_REFVOLTAGE;
 
-        um_adc_get( ADC_INPUT_REFVOLTAGE , UM_ADC_READ_ONE_LONG, (um_adc_range_t*)&rainge,  &reeeeed );
+        um_adc_get( inputch , UM_ADC_READ_ONE_LONG, (um_adc_range_t*)&rainge,  &reeeeed );
 //        um_adc_get( ADC_INPUT_A6 , UM_ADC_READ_ONE, (um_adc_range_t*)&rainge,  &reeeeed );
 
 
@@ -234,9 +232,19 @@ int main(void) {
             rainge = 1;
             break;
         case UM_ADC_RANGE_LARGE:
-            reemv *= 3300;
-            reemv = reemv >> 10;
-            rainge = 2;
+            if (inputch == ADC_INPUT_REFVOLTAGE)
+            {
+                reemv = 1500;
+                reemv *= 1 << 10;
+                reemv /= reeeeed;
+                rainge = 4;
+            }
+            else
+            {
+                reemv *= 3300;
+                reemv = reemv >> 10;
+                rainge = 2;
+            }
             break;
         case UM_ADC_RANGE_VREFP:
             reemv = 1<<10;

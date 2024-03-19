@@ -32,3 +32,4 @@ Release/
 *.sublime-workspace
 *.launch
 *.prefs
+/debug-launchpad/

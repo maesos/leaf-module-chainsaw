@@ -104,3 +104,54 @@ int um_adc_getnext(int16_t * readback)
 
     return 0;
 }
+
+
+int um_tim_init()
+{
+
+}
+
+int um_tim_init_ticks()
+{
+
+    // 16 bit time max ~= 1 minute
+    // 32 bit time max ~= 49 days
+    volatile uint32_t tick_msec = 0;
+    volatile uint16_t stop_mode_done = 0;
+
+
+    // Timer A0 for generating timer Ticks
+    // Frequency of 7.8125 kHz (128.0 usec periods) based off 32.786 khz ACLK
+
+//        Capture compare register TA0.0 unused
+//        Capture compare register TA0.1 for ticks
+//        Capture compare register TA0.2 unused
+
+    static Timer_A_initCompareModeParam cctl_param = {0};
+    cctl_param.compareInterruptEnable = TIMER_A_CAPTURECOMPARE_INTERRUPT_ENABLE;
+    cctl_param.compareOutputMode = TIMER_A_OUTPUTMODE_OUTBITVALUE;
+    cctl_param.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_0;
+    cctl_param.compareValue = 1000;
+    Timer_A_initCompareMode(TIMER_A0_BASE, &cctl_param);
+
+    TA0CCTL0 = CCIE;                             // TACCR0 interrupt enabled
+//    TA0CCTL1 = CCIE;                             // TACCR0 interrupt enabled
+
+//            //ACLK     COUNT  clear ctr interrupt en
+//    TA0CTL = TASSEL_1 | MC__CONTINUOUS | TACLR |  TAIE;
+
+    Timer_A_setCompareValue(TIMER_A0_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, 10);
+//    Timer_A_setCompareValue(TIMER_A0_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_1, 0);
+//    Timer_A_setCompareValue(TIMER_A0_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_2, 0);
+
+    Timer_A_initContinuousModeParam param = {0};
+    param.clockSource = TIMER_A_CLOCKSOURCE_ACLK;  //ACLK 32.768kHz
+//    param.clockSourceDivider = 0b111;  // Timer divide by 8
+    param.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_32;
+    param.timerInterruptEnable_TAIE = TIMER_A_TAIE_INTERRUPT_ENABLE;
+    param.timerClear = TIMER_A_DO_CLEAR;
+    param.startTimer = 1;
+    Timer_A_initContinuousMode(TIMER_A0_BASE, &param);
+
+    return;
+}

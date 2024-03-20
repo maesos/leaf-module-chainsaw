@@ -54,9 +54,22 @@ int um_adc_getnext(int16_t * readback);
 
 
 
+typedef struct um_tim_infos_s
+{
 
-int um_tim_init();
-int um_tim_init_ticks();
+    void (*ccr_call)();
+
+    uint16_t * ccr_list;
+    uint16_t ccr_list_len;
+    uint16_t ccr_list_progress;
+
+} um_tim_infos_t;
+
+um_tim_infos_t tim1_0;
+um_tim_infos_t tim1_1;
+um_tim_infos_t tim1_2;
+
+int um_tim1_base(uint16_t divider, uint16_t * ccr_list, uint16_t ccr_list_len, void (*to_call)());
 
 
 

@@ -44,6 +44,7 @@
 #include "utils_msp.h"
 
 void Init_GPIO();
+void toggle_p2_6();
 
 #ifdef DEBUG_PRINT
 static char uart_send[64] = {0};
@@ -116,6 +117,12 @@ int main(void) {
 // | __ |__] | |  |    |    |___ | __ 
 // |__] |    | |__|    |___ |    |__] 
                                    
+
+/*    For GPIO reference
+P1DIR
+P1OUT
+P1IN
+//*/
 //  GPIO PIN CONFIGURATION BEGIN
     GPIO_clearInterrupt(GPIO_PORT_P1, GPIO_PIN_ALL16);
     GPIO_clearInterrupt(GPIO_PORT_P2, GPIO_PIN_ALL16);
@@ -167,6 +174,13 @@ int main(void) {
     unsigned int loops = 0;
 
 
+//    With a 4MHz smclk/16=250kHz timer
+//    1msec=250, 20msec=5k total cycle time
+//    Sum of pwm_modes must be 5k
+    uint16_t pwm_modes[] = { 250 , 4750};
+    um_tim1_base(TIMER_A_CLOCKSOURCE_DIVIDER_16 , pwm_modes, sizeof(pwm_modes), toggle_p2_6);
+
+
     // Main Loop
     while(1)
     {
@@ -177,7 +191,7 @@ int main(void) {
 
         WDT_A_resetTimer(WDT_A_BASE);
 #ifdef DEBUG_PRINT
-        sprintf(uart_send, "\n\rkick %i\n\r\r\r\r\r", loops++);
+        sprintf(uart_send, "\n\rkick %i \t%i\n\r\r\r\r\r", loops++, tick_msec);
         debug_print(uart_send, 16);
 #endif
 
@@ -266,7 +280,7 @@ int main(void) {
         
         int thing = loops % 1000 / 10;
 
-        ug_pid_update(&pid, thing , &command);
+//        ug_pid_update(&pid, thing , &command);
 
 #ifdef DEBUG_PRINT
         sprintf(uart_send, "\rsummary: %i \t%i\n\r\r\r\r", thing, (uint32_t)command);
@@ -278,6 +292,16 @@ int main(void) {
         stop_mode(1);
 
     }
+}
+
+
+
+void toggle_p2_6()
+{
+//    GPIO_toggleOutputOnPin(RS485_RX_PORT, RS485_RX_PIN);
+    P1OUT ^= 0b00100000;
+
+    return;
 }
 
 

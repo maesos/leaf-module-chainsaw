@@ -632,7 +632,7 @@ void timer_a0_cfg()
     // Frequency of 7.8125 kHz (128.0 usec periods) based off 32.786 khz ACLK
 
 //        Capture compare register TA0.0 unused
-//        Capture compare register TA0.1 for ticks
+//        Capture compare register TA0.1 for ticks (am I really sure about this)
 //        Capture compare register TA0.2 unused
 
     static Timer_A_initCompareModeParam cctl_param = {0};
@@ -762,10 +762,6 @@ int wait_for_intrp(uint32_t stop_time)
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void TIMER0_A0_ISR(void)
-//#elif defined(__GNUC__)
-//void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) TIMER0_A1_ISR (void)
-//#else
-//#error Compiler not supported!
 #endif
 {
     tick_msec++;
@@ -773,8 +769,6 @@ __interrupt void TIMER0_A0_ISR(void)
 //    {
 //        tick_s++;
 //    }
-
-
 
     // Add 1 to the counter for next tick
     Timer_A_setCompareValue(TIMER_A0_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, TA0R + 1);
@@ -817,8 +811,8 @@ __interrupt void TIMER0_A1_ISR(void)
 
 //#pragma vector=PORT2_VECTOR
 //#pragma vector=PORT1_VECTOR
-//#pragma vector=TIMER1_A1_VECTOR
-//#pragma vector=TIMER1_A0_VECTOR
+//#pragma vector=TIMER1_A1_VECTOR   // utilized in utils_msp.c
+//#pragma vector=TIMER1_A0_VECTOR   // utilized in utils_msp.c
 //#pragma vector=TIMER0_A1_VECTOR
 //#pragma vector=TIMER0_A0_VECTOR
 #pragma vector=ADC10_VECTOR

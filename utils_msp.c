@@ -106,52 +106,97 @@ int um_adc_getnext(int16_t * readback)
 }
 
 
-int um_tim_init()
+
+
+int um_tim1_base(uint16_t divider, uint16_t * ccr_list, uint16_t ccr_list_len, void (*to_call)())
 {
 
-}
-
-int um_tim_init_ticks()
-{
-
-    // 16 bit time max ~= 1 minute
-    // 32 bit time max ~= 49 days
-    volatile uint32_t tick_msec = 0;
-    volatile uint16_t stop_mode_done = 0;
+    tim1_0.ccr_list = ccr_list;
+    tim1_0.ccr_list_len = ccr_list_len;
+    tim1_0.ccr_list_progress = 0;
+    tim1_0.ccr_call = to_call;
 
 
-    // Timer A0 for generating timer Ticks
-    // Frequency of 7.8125 kHz (128.0 usec periods) based off 32.786 khz ACLK
-
-//        Capture compare register TA0.0 unused
-//        Capture compare register TA0.1 for ticks
-//        Capture compare register TA0.2 unused
+//        Capture compare register TA1.0 for a thing
+//        Capture compare register TA1.1 for ticks
+//        Capture compare register TA1.2 unused
+//    Present counter value stored in [TA1R]
 
     static Timer_A_initCompareModeParam cctl_param = {0};
     cctl_param.compareInterruptEnable = TIMER_A_CAPTURECOMPARE_INTERRUPT_ENABLE;
     cctl_param.compareOutputMode = TIMER_A_OUTPUTMODE_OUTBITVALUE;
     cctl_param.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_0;
-    cctl_param.compareValue = 1000;
-    Timer_A_initCompareMode(TIMER_A0_BASE, &cctl_param);
+    cctl_param.compareValue = 0;
+    Timer_A_initCompareMode(TIMER_A1_BASE, &cctl_param);
 
-    TA0CCTL0 = CCIE;                             // TACCR0 interrupt enabled
-//    TA0CCTL1 = CCIE;                             // TACCR0 interrupt enabled
+    Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, TA1R + tim1_0.ccr_list[tim1_0.ccr_list_progress]);
 
-//            //ACLK     COUNT  clear ctr interrupt en
-//    TA0CTL = TASSEL_1 | MC__CONTINUOUS | TACLR |  TAIE;
-
-    Timer_A_setCompareValue(TIMER_A0_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, 10);
-//    Timer_A_setCompareValue(TIMER_A0_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_1, 0);
-//    Timer_A_setCompareValue(TIMER_A0_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_2, 0);
+    TA1CCTL0 = CCIE;                             // TACCR0 interrupt enabled (alternatively use TA1CCTL1)
 
     Timer_A_initContinuousModeParam param = {0};
-    param.clockSource = TIMER_A_CLOCKSOURCE_ACLK;  //ACLK 32.768kHz
-//    param.clockSourceDivider = 0b111;  // Timer divide by 8
-    param.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_32;
+    param.clockSource = TIMER_A_CLOCKSOURCE_SMCLK;  //ACLK 32.768kHz
+    param.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_16;
     param.timerInterruptEnable_TAIE = TIMER_A_TAIE_INTERRUPT_ENABLE;
     param.timerClear = TIMER_A_DO_CLEAR;
     param.startTimer = 1;
-    Timer_A_initContinuousMode(TIMER_A0_BASE, &param);
+    Timer_A_initContinuousMode(TIMER_A1_BASE, &param);
 
-    return;
+    return 0;
 }
+
+
+
+
+
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=TIMER1_A0_VECTOR // THIS VECTOR IS ONLY FOR THE CCR0 FLAG, NOT ANY OTHER ONES!
+__interrupt void TIMER1_A0_ISR(void)
+#endif
+{
+
+    if (tim1_0.ccr_call)
+    {
+        tim1_0.ccr_call();
+    }
+
+    uint16_t next = tim1_0.ccr_list[ (tim1_0.ccr_list_progress++) % tim1_0.ccr_list_len ];
+//    next += Timer_A_getCounterValue(TIMER_A1_BASE);
+    next = (next + TA1R) % 0xFFFF;
+
+    Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
+
+}
+
+
+// Timer1_A1 Interrupt Vector (TAIV) handler (general version with other interrupt sources too)
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=TIMER1_A1_VECTOR
+__interrupt void TIMER1_A1_ISR(void)
+#endif
+{
+
+    uint16_t next = 0;
+
+    switch(__even_in_range(TA1IV,TA1IV_TAIFG))
+    {
+        case TA1IV_NONE:
+            break;                               // No interrupt
+        case TA1IV_TACCR1:
+            next = tim1_1.ccr_list[ (tim1_1.ccr_list_progress++) % tim1_1.ccr_list_len ];
+            next = (next + TA1R) % 0xFFFF;
+            Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
+            break;                               // CCR1 not used
+        case TA1IV_TACCR2:
+            next = tim1_2.ccr_list[ (tim1_2.ccr_list_progress++) % tim1_2.ccr_list_len ];
+            next = (next + TA1R) % 0xFFFF;
+            Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
+            break;                               // CCR2 not used
+        case TA1IV_TAIFG:
+            // Overflow conditions and others
+            break;
+        default:
+            break;
+    }
+
+}
+

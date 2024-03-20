@@ -45,6 +45,8 @@
 
 void Init_GPIO();
 void toggle_p2_6();
+void p2_6_off();
+void p2_6_on();
 
 #ifdef DEBUG_PRINT
 static char uart_send[64] = {0};
@@ -100,6 +102,7 @@ int main(void) {
     volatile uint32_t smclk = CS_getSMCLK();
     volatile uint32_t aclk = CS_getACLK();
 
+//    For the ticks
     timer_a0_cfg();
 //  CLOCK CONFIGURATION END
 
@@ -178,6 +181,7 @@ P1IN
 //    1msec=250, 20msec=5k total cycle time
 //    Sum of pwm_modes must be 5k
     uint16_t pwm_modes[] = { 250 , 4750};
+//    uint16_t pwm_modes[] = { 400 , 4600};
     um_tim1_base(TIMER_A_CLOCKSOURCE_DIVIDER_16 , pwm_modes, sizeof(pwm_modes), toggle_p2_6);
 
 
@@ -192,7 +196,7 @@ P1IN
         WDT_A_resetTimer(WDT_A_BASE);
 #ifdef DEBUG_PRINT
         sprintf(uart_send, "\n\rkick %i \t%i\n\r\r\r\r\r", loops++, tick_msec);
-        debug_print(uart_send, 16);
+        debug_print(uart_send, 23);
 #endif
 
 
@@ -200,7 +204,6 @@ P1IN
 //        stop_mode(500);
 
 
-        uint8_t recv_buff[10] = {0};
 
         if (1 && loops % 200 == 0)
         {
@@ -209,21 +212,22 @@ P1IN
 //            GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN7);
 //            stop_mode(1);
             GPIO_toggleOutputOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
-            stop_mode(25);
+//            __delay_cycles(30000);
+//            stop_mode(25);
         }
         if (loops % 35 == 0)
         {
             GPIO_toggleOutputOnPin(GPIO_PORT_P2, GPIO_PIN7);
         }
-        if (loops % 5 == 0)
-        {
-            GPIO_toggleOutputOnPin(RS485_RX_PORT, RS485_RX_PIN);
-        }
-        if (loops % 17 == 0)
+        if (loops % 55 == 0)
         {
             GPIO_toggleOutputOnPin(RS485_REn_PORT, RS485_REn_PIN);
         }
 
+
+//        pwm_modes[0] = (loops) % 250 + 250;
+//        pwm_modes[1] = 5000 - pwm_modes[0];
+//        pwm_modes[1] = pwm_modes[1] < 4750? pwm_modes[1] : 4750;
 
 
 //        UM_ADC_CH_A6 for the actual external one
@@ -272,24 +276,21 @@ P1IN
         }
 
 
-//        rc_uart = 0;
-//        rc_uart |= uart_init(&uart_a1);
 
-//        uint8_t recv_buff[12] = {0};
-        memset(recv_buff, 0, sizeof(recv_buff));
         
         int thing = loops % 1000 / 10;
 
-//        ug_pid_update(&pid, thing , &command);
+        ug_pid_update(&pid, thing , &command);
 
 #ifdef DEBUG_PRINT
         sprintf(uart_send, "\rsummary: %i \t%i\n\r\r\r\r", thing, (uint32_t)command);
         debug_print(uart_send, 38);
         sprintf(uart_send, "\r\t\t\tADC: %imV \t%i \t{%i} \n\r\r\r\r", (uint16_t)reemv, reeeeed, rainge);
         debug_print(uart_send, 38);
+        sprintf(uart_send, "\r\t\t\t\t\t\ttim %u / %u | %u\n\r\r\r\r\r\r\r\r\r", TA1R , TA1CCR0, pwm_modes[0]);
+        debug_print(uart_send, 50);
 #endif
 
-        stop_mode(1);
 
     }
 }
@@ -299,11 +300,18 @@ P1IN
 void toggle_p2_6()
 {
 //    GPIO_toggleOutputOnPin(RS485_RX_PORT, RS485_RX_PIN);
-    P1OUT ^= 0b00100000;
-
-    return;
+    P2OUT ^= GPIO_PIN6;
 }
 
+
+void p2_6_off()
+{
+    P2OUT &= ~GPIO_PIN6;
+}
+void p2_6_on()
+{
+    P2OUT |= GPIO_PIN6;
+}
 
 #pragma vector=PORT1_VECTOR
 __interrupt void isr_port_1(void)

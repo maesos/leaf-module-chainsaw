@@ -159,11 +159,13 @@ __interrupt void TIMER1_A0_ISR(void)
         tim1_0.ccr_call();
     }
 
-    uint16_t next = tim1_0.ccr_list[ (tim1_0.ccr_list_progress++) % tim1_0.ccr_list_len ];
-//    next += Timer_A_getCounterValue(TIMER_A1_BASE);
-    next = (next + TA1R) % 0xFFFF;
+//    P2OUT ^= GPIO_PIN6;
+
+    uint16_t next = tim1_0.ccr_list[ (tim1_0.ccr_list_progress) % tim1_0.ccr_list_len ];
+    next = (next + TA1CCR0) % 0xFFFF;
 
     Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
+    tim1_0.ccr_list_progress++;
 
 }
 
@@ -182,13 +184,21 @@ __interrupt void TIMER1_A1_ISR(void)
         case TA1IV_NONE:
             break;                               // No interrupt
         case TA1IV_TACCR1:
+            if (tim1_1.ccr_call)
+            {
+                tim1_1.ccr_call();
+            }
             next = tim1_1.ccr_list[ (tim1_1.ccr_list_progress++) % tim1_1.ccr_list_len ];
-            next = (next + TA1R) % 0xFFFF;
+            next = (next + TA1CCR1) % 0xFFFF;
             Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
             break;                               // CCR1 not used
         case TA1IV_TACCR2:
+            if (tim1_2.ccr_call)
+            {
+                tim1_2.ccr_call();
+            }
             next = tim1_2.ccr_list[ (tim1_2.ccr_list_progress++) % tim1_2.ccr_list_len ];
-            next = (next + TA1R) % 0xFFFF;
+            next = (next + TA1CCR2) % 0xFFFF;
             Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
             break;                               // CCR2 not used
         case TA1IV_TAIFG:

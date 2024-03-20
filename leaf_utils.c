@@ -210,7 +210,7 @@ int debug_print(char * buf, uint8_t len)
 
     int count;
 
-    for (count = 0; count < len; count++)
+    for (count = 0; count < len || buf[count] == 0; count++)
     {
         EUSCI_A_UART_transmitData(EUSCI_A0_BASE, buf[count]);
 //        __delay_cycles(250);

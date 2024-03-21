@@ -186,7 +186,6 @@ P1IN
 //    uint16_t pwm_modes[] = { 400 , 4600};
     pwm_modes[0] = 250;
     pwm_modes[1] = 4750;
-//    pwm_modes[2] = 1750;
 
     um_tim1_base(TIMER_A_CLOCKSOURCE_DIVIDER_16 , pwm_modes, PWM_CYCLES, toggle_p2_6);
 
@@ -283,12 +282,12 @@ P1IN
         ug_pid_update(&pid, thing , &command);
 
 #ifdef DEBUG_PRINT
-        sprintf(uart_send, "\rsummary: %i \t%u \t%u\n\r\r\r\r\r", thing, (uint32_t)command, pwm_modes[0]);
+        sprintf(uart_send, "\rsummary: %i \t%u\n\r\r\r\r\r\r", thing, (uint32_t)command);
         debug_print(uart_send, 44);
-        sprintf(uart_send, "\r\t\t\tADC: %imV \t%i \t{%i} \n\r\r\r\r", (uint16_t)reemv, reeeeed, rainge);
+        sprintf(uart_send, "\r\t\t\t\tADC: %imV \t%i \t{%i} \n\r\r\r\r", (uint16_t)reemv, reeeeed, rainge);
         debug_print(uart_send, 38);
-//        sprintf(uart_send, "\r\t\t\t\t\t\ttim %u / %u | %u\n\r\r\r\r\r\r\r\r\r", TA1R , TA1CCR0, pwm_modes[0]);
-//        debug_print(uart_send, 50);
+        sprintf(uart_send, "\r\t\t\t\t\t\ttim %u | %u / %u\n\r\r\r\r\r\r\r\r\r", pwm_modes[0], TA1R , TA1CCR0);
+        debug_print(uart_send, 50);
 #endif
 
 

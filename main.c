@@ -177,12 +177,18 @@ P1IN
     unsigned int loops = 0;
 
 
+    GPIO_setOutputLowOnPin(RS485_RX_PORT, RS485_RX_PIN);
 //    With a 4MHz smclk/16=250kHz timer
 //    1msec=250, 20msec=5k total cycle time
 //    Sum of pwm_modes must be 5k
-    uint16_t pwm_modes[] = { 250 , 4750};
+#define PWM_CYCLES 2
+    uint16_t pwm_modes[PWM_CYCLES] = {0};
 //    uint16_t pwm_modes[] = { 400 , 4600};
-    um_tim1_base(TIMER_A_CLOCKSOURCE_DIVIDER_16 , pwm_modes, sizeof(pwm_modes), toggle_p2_6);
+    pwm_modes[0] = 250;
+    pwm_modes[1] = 4750;
+//    pwm_modes[2] = 1750;
+
+    um_tim1_base(TIMER_A_CLOCKSOURCE_DIVIDER_16 , pwm_modes, PWM_CYCLES, toggle_p2_6);
 
 
     // Main Loop
@@ -211,23 +217,25 @@ P1IN
 //            GPIO_setOutputLowOnPin(RS485_RX_PORT, RS485_RX_PIN);
 //            GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN7);
 //            stop_mode(1);
-            GPIO_toggleOutputOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
+//            GPIO_toggleOutputOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
+            GPIO_setOutputHighOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
 //            __delay_cycles(30000);
 //            stop_mode(25);
         }
-        if (loops % 35 == 0)
-        {
-            GPIO_toggleOutputOnPin(GPIO_PORT_P2, GPIO_PIN7);
-        }
-        if (loops % 55 == 0)
-        {
-            GPIO_toggleOutputOnPin(RS485_REn_PORT, RS485_REn_PIN);
-        }
+//        if (loops % 35 == 0)
+//        {
+//            GPIO_toggleOutputOnPin(GPIO_PORT_P2, GPIO_PIN7);
+//        }
+//        if (loops % 55 == 0)
+//        {
+//            GPIO_toggleOutputOnPin(RS485_REn_PORT, RS485_REn_PIN);
+//        }
 
 
-//        pwm_modes[0] = (loops) % 250 + 250;
-//        pwm_modes[1] = 5000 - pwm_modes[0];
-//        pwm_modes[1] = pwm_modes[1] < 4750? pwm_modes[1] : 4750;
+        pwm_modes[0] = abs( (loops) % 500 - 250 ) + 250;
+        pwm_modes[1] = 5000 - pwm_modes[0];
+        pwm_modes[1] = pwm_modes[1] < 4750? pwm_modes[1] : 4750;
+
 
 
 //        UM_ADC_CH_A6 for the actual external one

@@ -159,13 +159,13 @@ __interrupt void TIMER1_A0_ISR(void)
         tim1_0.ccr_call();
     }
 
-//    P2OUT ^= GPIO_PIN6;
+    uint16_t next = tim1_0.ccr_list[ tim1_0.ccr_list_progress++ ];
+    tim1_0.ccr_list_progress = tim1_0.ccr_list_progress % tim1_0.ccr_list_len;
 
-    uint16_t next = tim1_0.ccr_list[ (tim1_0.ccr_list_progress) % tim1_0.ccr_list_len ];
-    next = (next + TA1CCR0) % 0xFFFF;
-
-    Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
-    tim1_0.ccr_list_progress++;
+//    Turns out don't need to modulo it
+//    next = (next + TA1CCR0) % 0xFFFF;
+    TA1CCR0 += next;
+//    Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
 
 }
 

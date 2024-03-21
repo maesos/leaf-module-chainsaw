@@ -160,13 +160,9 @@ __interrupt void TIMER1_A0_ISR(void)
     }
 
     uint16_t next = tim1_0.ccr_list[ tim1_0.ccr_list_progress++ ];
-    tim1_0.ccr_list_progress = tim1_0.ccr_list_progress % tim1_0.ccr_list_len;
+    tim1_0.ccr_list_progress %= tim1_0.ccr_list_len;
 
-//    Turns out don't need to modulo it
-//    next = (next + TA1CCR0) % 0xFFFF;
     TA1CCR0 += next;
-//    Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
-
 }
 
 
@@ -188,18 +184,18 @@ __interrupt void TIMER1_A1_ISR(void)
             {
                 tim1_1.ccr_call();
             }
-            next = tim1_1.ccr_list[ (tim1_1.ccr_list_progress++) % tim1_1.ccr_list_len ];
-            next = (next + TA1CCR1) % 0xFFFF;
-            Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
+            next = tim1_1.ccr_list[ tim1_1.ccr_list_progress++ ];
+            tim1_1.ccr_list_progress %= tim1_1.ccr_list_len;
+            TA1CCR1 += next;
             break;                               // CCR1 not used
         case TA1IV_TACCR2:
             if (tim1_2.ccr_call)
             {
                 tim1_2.ccr_call();
             }
-            next = tim1_2.ccr_list[ (tim1_2.ccr_list_progress++) % tim1_2.ccr_list_len ];
-            next = (next + TA1CCR2) % 0xFFFF;
-            Timer_A_setCompareValue(TIMER_A1_BASE, TIMER_A_CAPTURECOMPARE_REGISTER_0, next );
+            next = tim1_2.ccr_list[ tim1_2.ccr_list_progress++ ];
+            tim1_2.ccr_list_progress %= tim1_2.ccr_list_len;
+            TA1CCR1 += next;
             break;                               // CCR2 not used
         case TA1IV_TAIFG:
             // Overflow conditions and others

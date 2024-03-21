@@ -207,19 +207,12 @@ P1IN
 
 
 
-//        stop_mode(500);
-
 
 
         if (1 && loops % 200 == 0)
         {
-//            GPIO_setOutputLowOnPin(RS485_REn_PORT, RS485_REn_PIN);
-//            GPIO_setOutputLowOnPin(RS485_RX_PORT, RS485_RX_PIN);
-//            GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN7);
-//            stop_mode(1);
 //            GPIO_toggleOutputOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
             GPIO_setOutputHighOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
-//            __delay_cycles(30000);
 //            stop_mode(25);
         }
 //        if (loops % 35 == 0)
@@ -284,19 +277,18 @@ P1IN
         }
 
 
-
         
         int thing = loops % 1000 / 10;
 
         ug_pid_update(&pid, thing , &command);
 
 #ifdef DEBUG_PRINT
-        sprintf(uart_send, "\rsummary: %i \t%i\n\r\r\r\r", thing, (uint32_t)command);
-        debug_print(uart_send, 38);
+        sprintf(uart_send, "\rsummary: %i \t%u \t%u\n\r\r\r\r\r", thing, (uint32_t)command, pwm_modes[0]);
+        debug_print(uart_send, 44);
         sprintf(uart_send, "\r\t\t\tADC: %imV \t%i \t{%i} \n\r\r\r\r", (uint16_t)reemv, reeeeed, rainge);
         debug_print(uart_send, 38);
-        sprintf(uart_send, "\r\t\t\t\t\t\ttim %u / %u | %u\n\r\r\r\r\r\r\r\r\r", TA1R , TA1CCR0, pwm_modes[0]);
-        debug_print(uart_send, 50);
+//        sprintf(uart_send, "\r\t\t\t\t\t\ttim %u / %u | %u\n\r\r\r\r\r\r\r\r\r", TA1R , TA1CCR0, pwm_modes[0]);
+//        debug_print(uart_send, 50);
 #endif
 
 

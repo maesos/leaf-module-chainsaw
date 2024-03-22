@@ -97,9 +97,9 @@ int ug_pid_update( ug_pid_t * pid , ug_pid_int measured, ug_pid_int * command)
 
 //    measured = measured << pid->exponential;
 
-    pid->err_prv = pid->loops > 0 ? pid->err_now : 0;
-    pid->err_now = measured - pid->target;
-//    pid->err_now = pid->target - measured;
+    pid->err_prv = pid->loops++ > 0 ? pid->err_now : 0;
+//    pid->err_now = measured - pid->target;
+    pid->err_now = pid->target - measured;
     pid->err_sum += pid->err_now;
 //    pid->err_sum = pid->err_sum;
 
@@ -124,7 +124,7 @@ int ug_pid_update( ug_pid_t * pid , ug_pid_int measured, ug_pid_int * command)
         *command = *command < pid->endstop_l ? pid->endstop_l : *command;
     }
 
-//    *command = *command >> pid->exponential;
+    *command = *command >> pid->exponential;
 
     return 0;
 }

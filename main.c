@@ -52,31 +52,12 @@ void p2_6_on();
 static char uart_send[64] = {0};
 #endif
 
-ug_pid_t pid = {0};
-// Instructions: do a same exponential for proportional
-// do single digits for integrals
-// i lim is post exponential
-ug_pid_int pid_kp = 0<<10;  // k values not affected by exponentials
-ug_pid_int pid_ki = 1<<2;
-ug_pid_int pid_kd = 0;
-ug_pid_int command = 0;
-ug_pid_int pid_exp = 8; // set for 2^-7 (1/128) decimal precision
 
 
 int main(void) {
 
     volatile uint8_t rc = 0;
 
-    volatile uint16_t i = 0;
-    volatile uint16_t j = 0;
-    volatile uint16_t k = 0;
-
-
-    ug_pid_init(&pid, pid_kp, pid_ki, pid_kd, 0);
-    ug_pid_set_exponential(&pid, pid_exp);
-    ug_pid_set_target(&pid, 50);
-    ug_pid_set_endstop(&pid, (-1<<8)<<8, (1<<8)<<8);    // 16 bit 32k max
-    ug_pid_set_i_lim(&pid, -6<<8, 6<<8);                //
 
 
 
@@ -137,8 +118,8 @@ P1IN
 
     GPIO_setAsOutputPin(RS485_DE_PORT, RS485_DE_PIN);
     GPIO_setOutputHighOnPin(RS485_DE_PORT, RS485_DE_PIN);
-    GPIO_setAsOutputPin(RS485_RX_PORT, RS485_RX_PIN);
-    GPIO_setOutputLowOnPin(RS485_RX_PORT, RS485_RX_PIN);
+    GPIO_setAsOutputPin(RS485_RXd_PORT, RS485_RXd_PIN);
+    GPIO_setOutputLowOnPin(RS485_RXd_PORT, RS485_RXd_PIN);
     GPIO_setAsOutputPin(RS485_REn_PORT, RS485_REn_PIN);
     GPIO_setOutputLowOnPin(RS485_REn_PORT, RS485_REn_PIN);
 
@@ -177,7 +158,45 @@ P1IN
     unsigned int loops = 0;
 
 
-    GPIO_setOutputLowOnPin(RS485_RX_PORT, RS485_RX_PIN);
+    ug_pid_t pid = {0};
+    // Instructions: do a same exponential for proportional
+    // do single digits for integrals
+    // i lim is post exponential
+    uint8_t pid_exp = 8; // 2^10 for 1/1024 precision
+    const ug_pid_int pid_kp = 1<<4;  // 1<<6 for 2^6/2^10 equaling 0.0666666
+//    const ug_pid_int pid_ki = 1<<2;  // 2^2/2^10 equaling 0.00390625
+    const ug_pid_int pid_ki = 0;  // 2^2/2^10 equaling 0.00390625
+    const ug_pid_int pid_kd = 0;
+    ug_pid_int command = 0;
+
+//    volatile uint16_t i = 0;
+//    volatile uint16_t j = 0;
+//    volatile uint16_t k = 0;
+
+    ug_pid_int bias = 0;
+    ug_pid_int end_l = 0;
+    ug_pid_int end_h = 200;
+    ug_pid_int i_lim_l = -66;
+    ug_pid_int i_lim_h = 66;
+    bias <<= pid_exp;
+    end_l <<= pid_exp;
+    end_h <<= pid_exp;
+    i_lim_l <<= pid_exp;
+    i_lim_h <<= pid_exp;
+
+    ug_pid_init(&pid, pid_kp, pid_ki, pid_kd, 0);
+    ug_pid_set_exponential(&pid, pid_exp);
+    ug_pid_set_target(&pid, 3000);
+    ug_pid_set_bias(&pid, bias); // not the midpoint
+    ug_pid_set_endstop(&pid, end_l, end_h);    // 15 bit 32k max (signed)
+    ug_pid_set_i_lim(&pid, i_lim_l, i_lim_h);                //
+
+//    Estimate P for target of 2000mA starting from 0000mA
+//    2000 error -> 150/250 command change
+//    About 1/15 for a proportional response
+
+
+    GPIO_setOutputLowOnPin(RS485_RXd_PORT, RS485_RXd_PIN);
 //    With a 4MHz smclk/16=250kHz timer
 //    1msec=250, 20msec=5k total cycle time
 //    Sum of pwm_modes must be 5k
@@ -205,39 +224,32 @@ P1IN
 #endif
 
 
-
-
-
-        if (1 && loops % 200 == 0)
+        if (1 && loops % 100 == 0)
         {
-//            GPIO_toggleOutputOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
             GPIO_setOutputHighOnPin(PWR_OUT_ENn_PORT, PWR_OUT_ENn_PIN);
 //            stop_mode(25);
         }
-//        if (loops % 35 == 0)
-//        {
-//            GPIO_toggleOutputOnPin(GPIO_PORT_P2, GPIO_PIN7);
-//        }
-//        if (loops % 55 == 0)
-//        {
-//            GPIO_toggleOutputOnPin(RS485_REn_PORT, RS485_REn_PIN);
-//        }
-
-
-        pwm_modes[0] = abs( (loops) % 500 - 250 ) + 250;
-        pwm_modes[1] = 5000 - pwm_modes[0];
-        pwm_modes[1] = pwm_modes[1] < 4750? pwm_modes[1] : 4750;
+        if (loops % 35 == 0)
+        {
+//              Blink the pin for the poke out pin
+            GPIO_toggleOutputOnPin(POKE_OUT_PORT, POKE_OUT_PIN);
+        }
+        if (loops &  11 == 0)
+        {
+//        The pin for the TXd enable from sensor side
+            GPIO_toggleOutputOnPin(RS485_REn_PORT, RS485_REn_PIN);
+        }
 
 
 
-//        UM_ADC_CH_A6 for the actual external one
+
+//        UM_ADC_CH_A6 for the actual external one (on port 1)
         int16_t reeeeed = 0;
         int16_t rainge = UM_ADC_RANGE_LARGE;
-        const int16_t inputch = ADC_INPUT_REFVOLTAGE;
+        const int16_t inputch = ADC_INPUT_A6;
 
         um_adc_get( inputch , UM_ADC_READ_ONE_LONG, (um_adc_range_t*)&rainge,  &reeeeed );
 //        um_adc_get( ADC_INPUT_A6 , UM_ADC_READ_ONE, (um_adc_range_t*)&rainge,  &reeeeed );
-
 
 
         int32_t reemv = reeeeed;
@@ -276,18 +288,30 @@ P1IN
         }
 
 
-        
-        int thing = loops % 1000 / 10;
+#define CURRENT_INCREASES_V
+//#define CURRENT_DECREASE_V
+//        BE CAREFUL OF THE MAX INT SIZE?? 32K MAX for 2^15
+#ifdef CURRENT_INCREASES_V
+        int current_mA = (reemv - 2500) * 10;
+#else
+        int current_mA = (2500 - reemv) * 10;
+#endif
 
-        ug_pid_update(&pid, thing , &command);
+        
+
+        ug_pid_update(&pid, current_mA , &command);
+
+        pwm_modes[0] = 500 - command;
+        pwm_modes[1] = 5000 - pwm_modes[0];
+        pwm_modes[1] = pwm_modes[1] < 4750? pwm_modes[1] : 4750;
 
 #ifdef DEBUG_PRINT
-        sprintf(uart_send, "\rsummary: %i \t%u\n\r\r\r\r\r\r", thing, (uint32_t)command);
+        sprintf(uart_send, "\rloop%i \tcmd:%lu \ttim%u \t%imA\n\r\r\r\r\r\r", loops, (uint32_t)command, pwm_modes[0], current_mA );
         debug_print(uart_send, 44);
-        sprintf(uart_send, "\r\t\t\t\tADC: %imV \t%i \t{%i} \n\r\r\r\r", (uint16_t)reemv, reeeeed, rainge);
+        sprintf(uart_send, "\r\t\t\t\t\tADC: %imV \t[%i] \t{%i} \n\r\r\r\r", (uint16_t)reemv, tick_msec);
         debug_print(uart_send, 38);
-        sprintf(uart_send, "\r\t\t\t\t\t\ttim %u | %u / %u\n\r\r\r\r\r\r\r\r\r", pwm_modes[0], TA1R , TA1CCR0);
-        debug_print(uart_send, 50);
+//        sprintf(uart_send, "\r\t\t\t\t\t\ttim %u | %u / %u\n\r\r\r\r\r\r\r\r\r", , TA1R , TA1CCR0);
+//        debug_print(uart_send, 50);
 #endif
 
 

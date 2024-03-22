@@ -41,8 +41,6 @@
 #define PWR_OUT_ENn_PORT GPIO_PORT_P2
 #define PWR_OUT_ENn_PIN GPIO_PIN1
 
-// May use interrupts to bitbang or may resolder the i2c bus to the pins
-// Going with bitbang for now
 #define RS485_REn_PORT GPIO_PORT_P2
 #define RS485_REn_PIN GPIO_PIN3
 #define RS485_DE_PORT GPIO_PORT_P2
@@ -50,8 +48,11 @@
 
 #define RS485_TX_PORT GPIO_PORT_P2
 #define RS485_TX_PIN GPIO_PIN5
-#define RS485_RX_PORT GPIO_PORT_P2
-#define RS485_RX_PIN GPIO_PIN6
+#define RS485_RXd_PORT GPIO_PORT_P2
+#define RS485_RXd_PIN GPIO_PIN6
+
+#define POKE_OUT_PORT GPIO_PORT_P2
+#define POKE_OUT_PIN GPIO_PIN7
 
 // LEAF FLOW
 

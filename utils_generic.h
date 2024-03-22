@@ -15,7 +15,7 @@
 
 
 
-#define ug_pid_int int32_t
+#define ug_pid_int int64_t
 
 typedef struct ug_pid_s {
 
@@ -31,18 +31,18 @@ typedef struct ug_pid_s {
 
     ug_pid_int loops;
 
-    ug_pid_int use_endstop;
+    uint8_t use_endstop;
     ug_pid_int endstop_h;
     ug_pid_int endstop_l;
 
-    ug_pid_int use_i_lim;
+    uint8_t use_i_lim;
     ug_pid_int i_lim_h;
     ug_pid_int i_lim_l;
 
-    ug_pid_int use_bias;
+    uint8_t use_bias;
     ug_pid_int bias;
 
-    ug_pid_int exponential;
+    uint8_t exponential;
 
 } ug_pid_t;
 

@@ -219,7 +219,7 @@ P1IN
 
         WDT_A_resetTimer(WDT_A_BASE);
 #ifdef DEBUG_PRINT
-        sprintf(uart_send, "\n\rkick %i \t%i\n\r\r\r\r\r", loops++, tick_msec);
+        sprintf(uart_send, "\n\rkick %i \t%lu\n\r\r\r\r\r", loops++, tick_msec);
         debug_print(uart_send, 23);
 #endif
 
@@ -301,12 +301,13 @@ P1IN
 
         ug_pid_update(&pid, current_mA , &command);
 
+//        pwm_modes[0] = 250 + command;
         pwm_modes[0] = 500 - command;
         pwm_modes[1] = 5000 - pwm_modes[0];
         pwm_modes[1] = pwm_modes[1] < 4750? pwm_modes[1] : 4750;
 
 #ifdef DEBUG_PRINT
-        sprintf(uart_send, "\rloop%i \tcmd:%lu \ttim%u \t%imA\n\r\r\r\r\r\r", loops, (uint32_t)command, pwm_modes[0], current_mA );
+        sprintf(uart_send, "\rloop: %i \tcmd: %lu \tpwm: %u/500 \t%imA\n\r\r\r\r\r\r", loops, (uint32_t)command, pwm_modes[0], current_mA );
         debug_print(uart_send, 44);
         sprintf(uart_send, "\r\t\t\t\t\tADC: %imV \t[%i] \t{%i} \n\r\r\r\r", (uint16_t)reemv, tick_msec);
         debug_print(uart_send, 38);
